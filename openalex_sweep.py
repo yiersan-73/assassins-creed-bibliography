@@ -263,8 +263,7 @@ def classify_and_ingest_in_chunks(papers: List[dict], chunk_size: int = 50) -> D
         )
 
         items_to_push: List[dict] = []
-        new_titles_added: List[str] = []
-        new_dois_added: List[str] = []
+        pushed_records: List[Tuple[str, str]] = []
         rejected_records: List[dict] = []
 
         for offset, paper in enumerate(chunk, 1):
@@ -316,30 +315,33 @@ def classify_and_ingest_in_chunks(papers: List[dict], chunk_size: int = 50) -> D
             else:
                 totals["case_study"] += 1
 
+            item = core.prepare_zotero_item(paper, ai_result)
             print(f"📂 Assigned Collection Keys: {ai_result.get('collection_keys')}")
-            print(f"🏷️ Tags: {ai_result.get('tags')}")
+            print(f"🏷️ Tags: {[t['tag'] for t in item.get('tags', [])]}")
             print(f"📝 English Summary: {ai_result.get('one_sentence_summary')}")
 
-            item = core.prepare_zotero_item(paper, ai_result)
             items_to_push.append(item)
-            new_titles_added.append(title)
-            if doi:
-                new_dois_added.append(doi)
+            pushed_records.append((title, doi))
 
             print("-" * 40)
             time.sleep(0.3)
 
         if items_to_push:
-            core.batch_push_to_zotero(items_to_push, chunk_size=50)
-            totals["pushed"] += len(items_to_push)
-            latest_version = None
-            try:
-                latest_version = core.zot.last_modified_version()
-            except Exception:
-                pass
-            core.save_to_local_cache(
-                new_titles_added, new_dois_added, cloud_version=latest_version
-            )
+            succeeded_indices = core.batch_push_to_zotero(items_to_push, chunk_size=50)
+            totals["pushed"] += len(succeeded_indices)
+            if succeeded_indices:
+                ok_titles = [pushed_records[idx][0] for idx in succeeded_indices]
+                ok_dois = [pushed_records[idx][1] for idx in succeeded_indices if pushed_records[idx][1]]
+                latest_version = None
+                try:
+                    latest_version = core.zot.last_modified_version()
+                except Exception:
+                    pass
+                core.save_to_local_cache(
+                    ok_titles, ok_dois, cloud_version=latest_version
+                )
+            else:
+                print("⚠️ No items in this chunk succeeded in Zotero push; local cache not updated.")
         else:
             print("⚠️ All candidates in this chunk were filtered as passing_mention; nothing pushed to Zotero.")
 
@@ -360,7 +362,7 @@ def classify_and_ingest_in_chunks(papers: List[dict], chunk_size: int = 50) -> D
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="OpenAlex Stage-1 full-pool direct sweep script (bypasses the 450-query keyword matrix)"
+        description="OpenAlex Stage-1 full-pool direct sweep script (bypasses the configured entity-perspective keyword matrix)"
     )
     parser.add_argument(
         "--dry-run",
@@ -386,8 +388,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     args = parse_args(argv)
     if args.limit is not None and args.limit <= 0:
         raise SystemExit("❌ --limit must be a positive integer.")
-    if not core.ROOT_COLLECTION_KEY:
-        raise SystemExit("❌ ZOTERO_ROOT_COLLECTION_KEY is not configured in .env.")
+    core.validate_runtime_credentials(
+        require_llm=not args.dry_run, require_zotero=not args.dry_run
+    )
 
     if core.OPENALEX_API_KEY:
         print("🔑 OpenAlex API Key loaded ($1.00/day dedicated quota mode)")

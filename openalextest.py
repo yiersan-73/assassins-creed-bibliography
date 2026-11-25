@@ -60,7 +60,7 @@ CLAUDE_MODEL = LLM_MODEL  # Backward-compatible alias
 
 ZOTERO_USER_ID = (os.getenv("ZOTERO_USER_ID") or "").strip()
 ZOTERO_API_KEY = (os.getenv("ZOTERO_API_KEY") or "").strip()
-ZOTERO_LIBRARY_TYPE = os.getenv("ZOTERO_LIBRARY_TYPE", "user")
+ZOTERO_LIBRARY_TYPE = (os.getenv("ZOTERO_LIBRARY_TYPE") or "user").strip().lower()
 OPENALEX_API_KEY = (os.getenv("OPENALEX_API_KEY") or "").strip()
 ROOT_COLLECTION_KEY = (os.getenv("ZOTERO_ROOT_COLLECTION_KEY") or "").strip()
 CACHE_FILE = "zotero_cache.json"
@@ -71,6 +71,28 @@ TAXONOMY_FILE = os.getenv("TAXONOMY_FILE", "taxonomy.json")
 DOMAIN_CONFIG_FILE = os.getenv("DOMAIN_CONFIG_FILE", "domain_config.json")
 
 USER_EMAIL = os.getenv("USER_EMAIL", "academic_curator@example.com")
+
+
+def _is_placeholder(val: str) -> bool:
+    """Return True if a credential value is empty or still set to a template placeholder."""
+    clean = (val or "").strip().lower()
+    return (not clean) or (clean.startswith("your_") and clean.endswith("_here"))
+
+
+def validate_runtime_credentials(require_llm: bool = True, require_zotero: bool = True) -> None:
+    """Validate required .env credentials and root collection key before network execution."""
+    if _is_placeholder(ROOT_COLLECTION_KEY):
+        raise SystemExit("❌ ZOTERO_ROOT_COLLECTION_KEY is missing or still set to a placeholder in .env.")
+    if require_zotero:
+        if _is_placeholder(ZOTERO_USER_ID):
+            raise SystemExit("❌ ZOTERO_USER_ID is missing or still set to a placeholder in .env.")
+        if _is_placeholder(ZOTERO_API_KEY):
+            raise SystemExit("❌ ZOTERO_API_KEY is missing or still set to a placeholder in .env.")
+    if require_llm:
+        base_low = (LLM_BASE_URL or "").lower()
+        is_local = "localhost" in base_low or "127.0.0.1" in base_low
+        if not is_local and _is_placeholder(LLM_API_KEY):
+            raise SystemExit("❌ LLM_API_KEY is missing or still set to a placeholder in .env.")
 
 
 def _resolve_config_path(filename: str) -> str:
@@ -423,9 +445,9 @@ def build_system_prompt(
         else "2. Assign all directly applicable subcollections across each category.\n"
     )
     fallback_rule = (
-        f"4. Do NOT include fallback keys ({fallback_list}) when a more specific subcollection in that category already applies.\n"
+        f"5. Do NOT include fallback keys ({fallback_list}) when a more specific subcollection in that category already applies.\n"
         if fallback_list
-        else "4. Do NOT include generic fallback keys when a more specific subcollection in that category already applies.\n"
+        else "5. Do NOT include generic fallback keys when a more specific subcollection in that category already applies.\n"
     )
 
     return f"""You are an academic curator specializing strictly in {topic_domain}.
@@ -449,7 +471,7 @@ CRITICAL RULES:
 1. You MUST select AT LEAST ONE key from EACH of the {len(dim_names)} categories ({dim_list_str}).
 {topics_rule}3. REGARDLESS of the original language of the paper, the "one_sentence_summary" MUST strictly be written in ENGLISH.
 4. Output ONLY the 8-character Collection Keys in "collection_keys".
-{fallback_rule}5. Do NOT emit "rel:*" or "type:*" tags in "tags" (they are generated deterministically from "relevance" and "doc_type").
+{fallback_rule}6. Do NOT emit "rel:*" or "type:*" tags in "tags" (they are generated deterministically from "relevance" and "doc_type").
 
 OUTPUT FORMAT REQUIREMENTS:
 Output STRICT JSON ONLY.
@@ -884,12 +906,17 @@ def enforce_four_categories(
     n2k = NAME_TO_KEY_MAP if name_to_key_map is None else name_to_key_map
 
     resolved_keys = set()
+    dropped_keys = []
     for raw_key in (selected_keys or []):
         k_clean = str(raw_key).strip().lower()
         if k_clean in n2k:
             resolved_keys.add(n2k[k_clean])
-        else:
+        elif not tax:
             resolved_keys.add(raw_key)
+        else:
+            dropped_keys.append(str(raw_key))
+    if dropped_keys:
+        print(f"⚠️ Ignored unknown collection key(s) from LLM output: {dropped_keys}")
 
     for category_name, category_map in tax.items():
         category_keys = set(category_map.values())
@@ -1559,16 +1586,33 @@ def _call_llm_text(system_prompt: str, user_prompt: str, max_tokens: int = 2000)
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         if LLM_API_KEY:
             headers["Authorization"] = f"Bearer {LLM_API_KEY}"
-        payload = {
+        is_gpt5_or_o = bool(
+            re.match(r"^(?:gpt-5|o[1-9])(?:$|[-.])", (LLM_MODEL or "").strip().lower())
+        )
+        payload: Dict[str, Any] = {
             "model": LLM_MODEL,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            "temperature": 0.1,
-            "max_tokens": max_tokens,
         }
+        if is_gpt5_or_o:
+            payload["max_completion_tokens"] = max_tokens
+        else:
+            payload["temperature"] = 0.1
+            payload["max_tokens"] = max_tokens
+
         resp = llm_session.post(endpoint, headers=headers, json=payload, timeout=60)
+        if resp.status_code == 400:
+            err_body = (resp.text or "").lower()
+            if any(tok in err_body for tok in ("max_tokens", "max_completion_tokens", "temperature")):
+                retry_payload = dict(payload)
+                if "max_tokens" in retry_payload and ("max_tokens" in err_body or "max_completion_tokens" in err_body):
+                    retry_payload["max_completion_tokens"] = retry_payload.pop("max_tokens")
+                elif "max_completion_tokens" in retry_payload and "max_completion_tokens" in err_body:
+                    retry_payload["max_tokens"] = retry_payload.pop("max_completion_tokens")
+                retry_payload.pop("temperature", None)
+                resp = llm_session.post(endpoint, headers=headers, json=retry_payload, timeout=60)
         resp.raise_for_status()
         data = resp.json() or {}
         choices = data.get("choices") or []
@@ -1606,8 +1650,11 @@ def classify_with_llm(
         try:
             raw_text = _call_llm_text(SYSTEM_PROMPT, user_prompt, max_tokens=2000)
 
-            json_match = re.search(r"\{.*\}", raw_text, re.DOTALL)
-            clean_json_str = json_match.group(0) if json_match else raw_text
+            cleaned_text = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL | re.IGNORECASE)
+            cleaned_text = re.sub(r"```(?:json)?\s*", "", cleaned_text, flags=re.IGNORECASE)
+            cleaned_text = cleaned_text.replace("```", "").strip()
+            json_match = re.search(r"\{.*\}", cleaned_text, re.DOTALL)
+            clean_json_str = json_match.group(0) if json_match else cleaned_text
 
             result = json.loads(clean_json_str)
             guarded_keys = apply_generic_language_guardrail(
@@ -1690,6 +1737,8 @@ def prepare_zotero_item(paper_data: dict, ai_result: dict) -> dict:
     issue = str(paper_data.get("issue") or "").strip()
     pages = str(paper_data.get("pages") or "").strip()
     publisher = _clean_book_publisher(paper_data.get("publisher") or "") if item_type in ("book", "bookSection", "conferencePaper") else ""
+    if item_type == "book" and not clean_publication and publisher:
+        clean_publication = publisher
 
     need_cr_biblio = bool(doi) and (
         (item_type == "journalArticle" and not (volume and issue and pages))
@@ -1782,11 +1831,12 @@ def prepare_zotero_item(paper_data: dict, ai_result: dict) -> dict:
     return item_payload
 
 
-def batch_push_to_zotero(items_list: list, chunk_size: int = 50) -> None:
+def batch_push_to_zotero(items_list: list, chunk_size: int = 50) -> List[int]:
     if not items_list:
-        return
+        return []
 
     total_count = len(items_list)
+    succeeded_indices: List[int] = []
     print(f"🚀 Pushing {total_count} scholarly item(s) to Zotero...")
 
     for i in range(0, total_count, chunk_size):
@@ -1795,7 +1845,11 @@ def batch_push_to_zotero(items_list: list, chunk_size: int = 50) -> None:
         try:
             response = zot.create_items(chunk)
             if response.get("success"):
-                success_keys = list(response["success"].values())
+                success_map = response["success"]
+                success_keys = list(success_map.values())
+                for idx_str in success_map.keys():
+                    if str(idx_str).isdigit():
+                        succeeded_indices.append(i + int(idx_str))
                 print(f"🎉 Chunk {batch_num} pushed to Zotero! Item Keys: {success_keys}")
 
                 log_entry = {
@@ -1813,6 +1867,8 @@ def batch_push_to_zotero(items_list: list, chunk_size: int = 50) -> None:
                 history.append(log_entry)
                 atomic_json_write(HISTORY_FILE, history)
                 print("📝 Recorded batch Item Keys safely to batch_history.json.")
+                if response.get("failed"):
+                    print(f"⚠️ Chunk {batch_num} partial Zotero failure: {response.get('failed')}")
 
             else:
                 print(f"❌ Chunk {batch_num} Zotero push failed: {response.get('failed')}")
@@ -1820,14 +1876,14 @@ def batch_push_to_zotero(items_list: list, chunk_size: int = 50) -> None:
             print(f"❌ Chunk {batch_num} Zotero network error: {e}")
         time.sleep(1)
     print()
+    return succeeded_indices
 
 
 # ==========================================
 # 11. Main Entrypoint
 # ==========================================
 def main():
-    if not ROOT_COLLECTION_KEY:
-        raise SystemExit("❌ ZOTERO_ROOT_COLLECTION_KEY is not configured in .env.")
+    validate_runtime_credentials(require_llm=True, require_zotero=True)
     if OPENALEX_API_KEY:
         print("🔑 OpenAlex API Key loaded ($1.00/day dedicated quota mode)")
     else:
@@ -1872,8 +1928,7 @@ def main():
     print(f"\n✅ Retrieval complete! Collected {len(papers)} candidate paper(s); starting LLM classification & gatekeeping...\n")
 
     items_to_push = []
-    new_titles_added = []
-    new_dois_added = []
+    pushed_records: List[Tuple[str, str]] = []
     rejected_records = []
     core_count = 0
     case_count = 0
@@ -1921,16 +1976,13 @@ def main():
         else:
             case_count += 1
 
+        item = prepare_zotero_item(paper, ai_result)
         print(f"📂 Assigned Collection Keys: {ai_result.get('collection_keys')}")
-        print(f"🏷️ Tags: {ai_result.get('tags')}")
+        print(f"🏷️ Tags: {[t['tag'] for t in item.get('tags', [])]}")
         print(f"📝 English Summary: {ai_result.get('one_sentence_summary')}")
 
-        item = prepare_zotero_item(paper, ai_result)
         items_to_push.append(item)
-
-        new_titles_added.append(title)
-        if doi:
-            new_dois_added.append(doi)
+        pushed_records.append((title, doi))
 
         print("-" * 40)
         time.sleep(0.3)
@@ -1942,13 +1994,18 @@ def main():
     )
 
     if items_to_push:
-        batch_push_to_zotero(items_to_push, chunk_size=50)
-        latest_version = None
-        try:
-            latest_version = zot.last_modified_version()
-        except Exception:
-            pass
-        save_to_local_cache(new_titles_added, new_dois_added, cloud_version=latest_version)
+        succeeded_indices = batch_push_to_zotero(items_to_push, chunk_size=50)
+        if succeeded_indices:
+            ok_titles = [pushed_records[idx][0] for idx in succeeded_indices]
+            ok_dois = [pushed_records[idx][1] for idx in succeeded_indices if pushed_records[idx][1]]
+            latest_version = None
+            try:
+                latest_version = zot.last_modified_version()
+            except Exception:
+                pass
+            save_to_local_cache(ok_titles, ok_dois, cloud_version=latest_version)
+        else:
+            print("⚠️ No items succeeded in Zotero push; local cache not updated.")
     else:
         print("⚠️ No candidates passed the relevance gatekeeper in this run; nothing pushed to Zotero.")
 
