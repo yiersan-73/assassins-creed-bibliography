@@ -1,0 +1,63 @@
+{
+  "Games": {
+    "AC1": "XSWRE2IF",
+    "AC3": "3VYLTHPD",
+    "Black Flag": "YBVCRCHK",
+    "Ezio Trilogy": "37WCQLKV",
+    "Mirage": "ZDAUWSF8",
+    "Odyssey": "K4JUJ2R7",
+    "Origins": "7FYWTYWR",
+    "Other games": "FNADQPF4",
+    "Shadows": "6A7UFYIY",
+    "Syndicate": "V2KEAKJ7",
+    "Unity": "LUQC9MGA",
+    "Valhalla": "3IR6GX5I"
+  },
+  "Subjects": {
+    "Architecture": "EAICRN7E",
+    "Culture": "HF8QB59K",
+    "Education": "3GAWK6GB",
+    "Games studies": "A66FWUHE",
+    "Heritage": "JWTIYSMY",
+    "History": "UWBPR66M",
+    "Identity": "MBSSWFAM",
+    "Linguistics&Localization": "5ZG3WUR2",
+    "Media&Adaptation Studies": "MGBV4FZW",
+    "Narrative": "46ZQ494I",
+    "Other subjects": "7IZGFH7T",
+    "Religious Studies": "8IBKQZHP",
+    "Tourism&Spatial Studies": "VUTMFIX7"
+  },
+  "Topics": {
+    "Archaeogaming": "8Z9TEDUR",
+    "Audio&Music": "23M4YJMJ",
+    "Authenticity": "MRECUM94",
+    "Game mechanism": "SYHM4A2Y",
+    "Games Industry": "KXY7ZWJL",
+    "Gender&Race": "LPA65Q2Q",
+    "History Memory": "QXRHUJ8A",
+    "Other topics": "6B3GQFE5",
+    "Postcolonialism": "XLVSMCNI",
+    "Translation&Localization": "KQXUMN5A",
+    "Transmedia Adaptation": "VC84ADXT",
+    "Virtual Tourism": "KNYDFNTU",
+    "Mythology & Classical Reception": "76JZ2V8N",
+    "Semiotics & Character Analysis": "VKCHHTP6",
+    "Philosophy & Ontology of Game Worlds": "2SDTZBP3",
+    "Game AI, Rendering & Computational Methods": "3AQ6X2WN",
+    "Player Experience & Affect": "P9IC3GNM",
+    "Power&Ideology": "4ZF5VLLM",
+    "Game-Based Learning & Pedagogy": "KIAE9XS9"
+  },
+  "Languages": {
+    "English": "6J69ISQX",
+    "French": "KTKGMGWU",
+    "German": "BRFJ7SXP",
+    "Indonesian": "UD8EK4V9",
+    "Italian": "96IAP8CM",
+    "Other languages": "MQRMWL4M",
+    "Polish": "NHCJ6Q6U",
+    "Portuguese": "WQS3R8HS",
+    "Spanish": "32IN488X"
+  }
+}

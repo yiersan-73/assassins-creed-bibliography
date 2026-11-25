@@ -1,0 +1,141 @@
+{
+  "topic_name": "Assassin's Creed",
+  "topic_domain": "Assassin's Creed video game studies",
+  "bot_name": "Academic_Literature_Bot/1.0",
+  "search_phrases": [
+    "assassin's creed",
+    "assassins creed",
+    "assassin creed"
+  ],
+  "prefix_strip_regex": "^\\s*(?:assassin['’]?s?\\s+creed)\\b[\\s:,\\-–—]*",
+  "seed_queries": [
+    "Assassin's Creed",
+    "Assassin's Creed Discovery Tour"
+  ],
+  "entities": [
+    "Assassin's Creed",
+    "Assassin's Creed Shadows",
+    "Assassin's Creed Shadows Yasuke",
+    "Assassin's Creed Mirage",
+    "Assassin's Creed Valhalla",
+    "Assassin's Creed Odyssey",
+    "Assassin's Creed Origins",
+    "Assassin's Creed Black Flag",
+    "Assassin's Creed Unity",
+    "Assassin's Creed Syndicate",
+    "Assassin's Creed Nexus",
+    "Assassin's Creed Rogue",
+    "Discovery Tour",
+    "Ezio Auditore"
+  ],
+  "perspectives": [
+    "postcolonialism",
+    "orientalism",
+    "architecture",
+    "archaeogaming",
+    "ludomusicology",
+    "historical accuracy",
+    "authenticity",
+    "public history",
+    "heritage",
+    "virtual tourism",
+    "gender identity",
+    "localization",
+    "transmedia narrative",
+    "memory studies",
+    "spatial analysis",
+    "political economy",
+    "game labor",
+    "ideology",
+    "accessibility",
+    "disability studies",
+    "indigenous",
+    "decolonial",
+    "computational",
+    "machine learning",
+    "crowd simulation",
+    "mythology",
+    "ontology",
+    "semiotics",
+    "affect",
+    "pedagogy",
+    "Islamic history",
+    "Japan reception"
+  ],
+  "taxonomy_defaults": {
+    "Games": "Other games",
+    "Subjects": "Other subjects",
+    "Topics": "Other topics",
+    "Languages": "English"
+  },
+  "generic_other_categories": {
+    "Subjects": "Other subjects",
+    "Topics": "Other topics",
+    "Languages": "Other languages"
+  },
+  "tag_dimensions": {
+    "Games": {
+      "prefix": "game"
+    },
+    "Languages": {
+      "prefix": "lang",
+      "aliases": {
+        "English": "en",
+        "French": "fr",
+        "German": "de",
+        "Indonesian": "id",
+        "Italian": "it",
+        "Polish": "pl",
+        "Portuguese": "pt",
+        "Spanish": "es",
+        "Other languages": "other"
+      }
+    }
+  },
+  "custom_prompt_rules": [
+    "CATEGORY-SPECIFIC RULES FOR \"Games\":",
+    "1. SPAN & MULTI-GAME EXPANSION: Only assign specific subcollection keys for titles explicitly analyzed in the paper. If a paper analyzes multiple specific installments, assign ALL corresponding keys.",
+    "2. NO OVER-EXPANSION: Series-wide papers that discuss the franchise broadly without deep analysis of specific titles MUST ONLY be assigned the \"Other games\" fallback key. NEVER assign an installment released after the paper's publication year.",
+    "3. SPIN-OFFS & SUB-TITLES: If a paper analyzes a spin-off or sub-title (e.g., \"Liberation\" linked to \"AC3\"), assign BOTH the related main entry key AND the \"Other games\" key."
+  ],
+  "relevance_examples": {
+    "core": "The target subject (its installments, major features, or direct adaptations) is the primary focus of the paper.",
+    "case_study": "The paper explores a broader theme (e.g., historical games, heritage, pedagogy, ludomusicology, architecture) AND explicitly analyzes the target subject as a substantial case study or comparative object.",
+    "passing_mention": "The target subject is ONLY mentioned briefly as background context or inside an illustrative list (e.g., \"games such as GTA, Minecraft, and ...\") with NO substantive analysis."
+  },
+  "blocked_authors": [
+    "oliver bowden",
+    "christie golden",
+    "anton gill",
+    "matthew j. kirby"
+  ],
+  "blocked_venues": [
+    "computer animation festival",
+    "new scientist",
+    "gamescom",
+    "old testament abstracts",
+    "new testament abstracts",
+    "fotogramas",
+    "微型计算机"
+  ],
+  "blocked_title_keywords": [
+    "the art of assassin",
+    "official guide",
+    "complete visual history",
+    "comic-reviews",
+    "podcast",
+    "cosa nostra #",
+    "game review:",
+    "cinematic trailer",
+    "e3 trailer",
+    "jaque al asesino",
+    "fatalna ostatnia część",
+    "recenzja gry",
+    "critique du film",
+    "spielkritik",
+    "dawn of ragnarok pc"
+  ],
+  "blocked_asset_regexes": [
+    "\\bhelmet gladiator\\b"
+  ]
+}

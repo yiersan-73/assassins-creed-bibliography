@@ -1,0 +1,26 @@
+# Secrets & environment
+.env
+.env.*
+!.env.example
+
+# Local pipeline caches, state & logs
+zotero_cache.json
+rejected_cache.json
+batch_history.json
+search_state.json
+incremental_state.json
+*.log
+
+# Python artifacts & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# IDE & OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

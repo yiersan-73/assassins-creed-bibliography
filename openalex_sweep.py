@@ -1,0 +1,445 @@
+"""
+OpenAlex Stage-1 Full-Pool Direct Sweep Engine
+==============================================
+Directly scans the entire OpenAlex Stage-1 target-topic pool configured in
+`domain_config.json` (`OPENALEX_BASE_FILTER`: exact title/abstract phrase +
+non-junk types, per_page=200, no keyword matrix), skips items already in
+`zotero_cache.json` and `rejected_cache.json`, and routes all remaining
+candidates through the shared `openalextest.py` pipeline (LLM classification
++ passing_mention gatekeeper + native Zotero push).
+
+Usage:
+  python openalex_sweep.py                     # Sweep & ingest all remaining Stage-1 papers
+  python openalex_sweep.py --dry-run           # Preview remaining candidates without LLM/Zotero writes
+  python openalex_sweep.py --limit 50          # Cap candidates processed in this run
+  python openalex_sweep.py --chunk-size 50     # Checkpoint & push every N candidates (default: 50)
+"""
+
+import argparse
+import datetime
+import time
+from collections import Counter
+from typing import Dict, List, Optional, Set, Tuple
+
+import openalextest as core
+
+OPENALEX_WORKS_URL = "https://api.openalex.org/works"
+
+
+def fetch_stage1_pool(
+    existing_titles: Set[str],
+    existing_dois: Set[str],
+    limit: Optional[int] = None,
+    per_page: int = 200,
+    max_pages: int = 50,
+    max_retries: int = 3,
+    max_rate_retries: int = 5,
+    sort: Optional[str] = "publication_date:desc",
+) -> Tuple[List[dict], Dict[str, int]]:
+    """
+    Directly sweep the OpenAlex Stage-1 exact-phrase pool (bypassing the query matrix)
+    and return all new candidate papers passing the academic pre-filter.
+    Automatically backs off on transient HTTP 429 pacing limits and raises
+    OpenAlexQuotaExceededError with partial_papers when the daily budget is exhausted.
+    """
+    valid_papers: List[dict] = []
+    stats = {
+        "total_hits": 0,
+        "pages_scanned": 0,
+        "raw_scanned": 0,
+        "selected": 0,
+    }
+    page = 1
+
+    print(
+        f"🔍 [OpenAlex Sweep] Scanning Stage-1 exact-phrase pool (per_page={per_page}"
+        + (f", limit={limit}" if limit else ", unlimited")
+        + ")..."
+    )
+
+    while page <= max_pages and (limit is None or len(valid_papers) < limit):
+        params = {
+            "filter": core.OPENALEX_BASE_FILTER,
+            "per_page": per_page,
+            "page": page,
+        }
+        if sort:
+            params["sort"] = sort
+
+        payload: Optional[dict] = None
+        net_attempts = 0
+        rate_attempts = 0
+        page_error: Optional[str] = None
+
+        while True:
+            try:
+                time.sleep(0.6)
+                response = core.openalex_session.get(
+                    OPENALEX_WORKS_URL, params=params, timeout=25
+                )
+
+                if response.status_code == 200:
+                    payload = response.json()
+                    break
+
+                elif response.status_code == 429:
+                    retry_after_raw = str(response.headers.get("Retry-After", "")).strip()
+                    retry_after_sec = (
+                        int(retry_after_raw) if retry_after_raw.isdigit() else None
+                    )
+                    rem_usd_raw = str(
+                        response.headers.get("X-RateLimit-Remaining-USD", "")
+                    ).strip()
+                    rem_usd = core._parse_float_header(
+                        response.headers, "X-RateLimit-Remaining-USD"
+                    )
+                    body_lower = (response.text or "").lower()
+
+                    is_daily_exhausted = (
+                        "insufficient budget" in body_lower
+                        or (rem_usd is not None and rem_usd < 0.005)
+                        or (retry_after_sec is not None and retry_after_sec > 120)
+                    )
+                    if is_daily_exhausted:
+                        raise core.OpenAlexQuotaExceededError(
+                            f"OpenAlex daily quota exhausted (Remaining=${rem_usd_raw or '?'}, Retry-After={retry_after_raw or '?'}s)",
+                            partial_papers=valid_papers,
+                        )
+
+                    rate_attempts += 1
+                    if rate_attempts <= max_rate_retries:
+                        base_wait = (
+                            (retry_after_sec + 1)
+                            if retry_after_sec is not None
+                            else (rate_attempts * 4)
+                        )
+                        wait_sec = min(max(base_wait, rate_attempts * 3), 60)
+                        print(
+                            f"⏳ [OpenAlex 429 Pacing] Retry-After={retry_after_raw or '?'}s, "
+                            f"Remaining=${rem_usd_raw or '?'} — waiting {wait_sec}s before retry "
+                            f"({rate_attempts}/{max_rate_retries})"
+                        )
+                        time.sleep(wait_sec)
+                        continue
+                    raise core.OpenAlexQuotaExceededError(
+                        f"OpenAlex persistent 429 rate limit after {max_rate_retries} retries (Remaining=${rem_usd_raw or '?'})",
+                        partial_papers=valid_papers,
+                    )
+
+                else:
+                    msg = f"HTTP {response.status_code}"
+                    print(
+                        f"⚠️ [OpenAlex {msg}] Sweep page {page} request failed: "
+                        f"{(response.text or '')[:160]}"
+                    )
+                    page_error = msg
+                    break
+
+            except core.OpenAlexQuotaExceededError:
+                raise
+            except Exception as e:
+                net_attempts += 1
+                print(
+                    f"⚠️ [OpenAlex Network Error] Sweep page {page} "
+                    f"attempt {net_attempts}/{max_retries} failed: {e}"
+                )
+                if net_attempts < max_retries:
+                    time.sleep(2 * net_attempts)
+                else:
+                    page_error = f"Network error: {e}"
+                    break
+
+        if page_error is not None:
+            if valid_papers:
+                print(
+                    f"⚠️ Page {page} request failed ({page_error}); "
+                    f"preserving {len(valid_papers)} previously collected candidates."
+                )
+                break
+            raise core.OpenAlexRequestError(page_error)
+
+        results = (payload or {}).get("results") or []
+        total_hits = ((payload or {}).get("meta") or {}).get("count")
+        if total_hits is not None:
+            stats["total_hits"] = total_hits
+
+        if not results:
+            if page == 1:
+                print("📭 No matching works found in OpenAlex Stage-1 exact-phrase pool.")
+            break
+
+        stats["pages_scanned"] = page
+        stats["raw_scanned"] += len(results)
+
+        for work in results:
+            try:
+                parsed = core._parse_openalex_work(work, existing_titles, existing_dois)
+            except Exception as parse_err:
+                err_id = work.get("id", "unknown") if isinstance(work, dict) else "non-dict"
+                print(f"⚠️ Skipping malformed OpenAlex work ({err_id}): {parse_err}")
+                continue
+
+            if not parsed:
+                continue
+
+            paper_data, norm_title, doi = parsed
+            valid_papers.append(paper_data)
+            existing_titles.add(norm_title)
+            if doi:
+                existing_dois.add(doi)
+
+            if limit is not None and len(valid_papers) >= limit:
+                break
+
+        hits_info = f"total_hits={total_hits}, " if total_hits is not None else ""
+        target_info = f"/{limit}" if limit is not None else ""
+        print(
+            f"📄 OpenAlex Sweep page {page} ({hits_info}page_items={len(results)}) | "
+            f"Collected candidates: {len(valid_papers)}{target_info}"
+        )
+
+        if (
+            (limit is not None and len(valid_papers) >= limit)
+            or len(results) < per_page
+            or (total_hits is not None and page * per_page >= total_hits)
+        ):
+            break
+
+        page += 1
+
+    stats["selected"] = len(valid_papers)
+    return valid_papers, stats
+
+
+def print_dry_run_summary(papers: List[dict], stats: Dict[str, int]) -> None:
+    """Read-only preview mode: print candidate distribution and samples without calling the LLM or writing caches."""
+    title_hits = 0
+    abs_only = 0
+    type_counter: Counter = Counter()
+
+    for p in papers:
+        nt = core.normalize_text(p.get("title", ""))
+        if core.SEARCH_PHRASES_NORM and any(kw in nt for kw in core.SEARCH_PHRASES_NORM):
+            title_hits += 1
+        else:
+            abs_only += 1
+        type_counter[p.get("workType") or "unknown"] += 1
+
+    print("\n" + "=" * 56)
+    print("🧪 [DRY-RUN COMPLETE] LLM was not called; no Zotero or local cache writes performed")
+    print(
+        f"📊 Total OpenAlex hits: {stats.get('total_hits', 0)} | Pages scanned: {stats.get('pages_scanned', 0)} | "
+        f"New filtered candidates: {len(papers)}"
+    )
+    print(f"   • Topic in title: {title_hits} | Topic in abstract only: {abs_only}")
+    print(f"   • OpenAlex work types: {dict(type_counter)}")
+    if papers:
+        print("   • First 10 candidates:")
+        for i, p in enumerate(papers[:10], 1):
+            print(
+                f"     [{i:2d}] [{p.get('year') or '?'}] ({p.get('workType') or '?'}) "
+                f"cite={p.get('citationCount', 0):3d} | {(p.get('title') or '')[:75]}"
+            )
+    print("=" * 56)
+
+
+def classify_and_ingest_in_chunks(papers: List[dict], chunk_size: int = 50) -> Dict[str, int]:
+    """
+    Run LLM multi-dimensional classification, passing-mention gatekeeping, and Zotero ingestion in chunks.
+    Pushes to Zotero and persists zotero_cache.json + rejected_cache.json after each chunk
+    to prevent losing progress on transient network interruptions.
+    """
+    totals = {"core": 0, "case_study": 0, "rejected": 0, "pushed": 0}
+    total_papers = len(papers)
+    safe_chunk = max(1, min(chunk_size, 50))
+
+    for start in range(0, total_papers, safe_chunk):
+        chunk = papers[start : start + safe_chunk]
+        chunk_idx = (start // safe_chunk) + 1
+        total_chunks = (total_papers + safe_chunk - 1) // safe_chunk
+        print(
+            f"\n🚀 === Processing chunk {chunk_idx}/{total_chunks} "
+            f"({start + 1}–{start + len(chunk)} / {total_papers}) ===\n"
+        )
+
+        items_to_push: List[dict] = []
+        new_titles_added: List[str] = []
+        new_dois_added: List[str] = []
+        rejected_records: List[dict] = []
+
+        for offset, paper in enumerate(chunk, 1):
+            global_idx = start + offset
+            title = paper.get("title") or ""
+            abstract = paper.get("abstract") or ""
+            venue = paper.get("venue") or ""
+            work_type = paper.get("workType") or ""
+            source_type = paper.get("sourceType") or ""
+            citations = paper.get("citationCount", 0)
+            doi = (paper.get("externalIds") or {}).get("DOI", "")
+
+            print(f"--- Processing candidate [{global_idx}/{total_papers}] ---")
+            print(f"📖 Title: {title}")
+            print(f"📊 Citations: {citations} | OpenAlex type: {work_type or 'unknown'}")
+
+            ai_result = core.classify_with_llm(
+                title,
+                abstract,
+                venue=venue,
+                work_type=work_type,
+                source_type=source_type,
+            )
+
+            ac_rel = ai_result.get("relevance") or ai_result.get("ac_relevance", "case_study")
+            doc_type = ai_result.get("doc_type", "research-article")
+            print(f"🎯 Relevance: {ac_rel} | DocType: {doc_type}")
+
+            if ac_rel == "passing_mention":
+                print(
+                    f"🚫 [Gatekeeper] Classified as passing_mention; skipping Zotero and recording in {core.REJECTED_CACHE_FILE}"
+                )
+                rejected_records.append(
+                    {
+                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "title": title,
+                        "doi": doi,
+                        "reason": "passing_mention",
+                        "summary": ai_result.get("one_sentence_summary", ""),
+                    }
+                )
+                totals["rejected"] += 1
+                print("-" * 40)
+                time.sleep(0.3)
+                continue
+
+            if ac_rel == "core":
+                totals["core"] += 1
+            else:
+                totals["case_study"] += 1
+
+            print(f"📂 Assigned Collection Keys: {ai_result.get('collection_keys')}")
+            print(f"🏷️ Tags: {ai_result.get('tags')}")
+            print(f"📝 English Summary: {ai_result.get('one_sentence_summary')}")
+
+            item = core.prepare_zotero_item(paper, ai_result)
+            items_to_push.append(item)
+            new_titles_added.append(title)
+            if doi:
+                new_dois_added.append(doi)
+
+            print("-" * 40)
+            time.sleep(0.3)
+
+        if items_to_push:
+            core.batch_push_to_zotero(items_to_push, chunk_size=50)
+            totals["pushed"] += len(items_to_push)
+            latest_version = None
+            try:
+                latest_version = core.zot.last_modified_version()
+            except Exception:
+                pass
+            core.save_to_local_cache(
+                new_titles_added, new_dois_added, cloud_version=latest_version
+            )
+        else:
+            print("⚠️ All candidates in this chunk were filtered as passing_mention; nothing pushed to Zotero.")
+
+        if rejected_records:
+            core.save_rejected_cache(rejected_records)
+            print(
+                f"🛡️ Persisted {len(rejected_records)} rejected record(s) from this chunk to {core.REJECTED_CACHE_FILE}."
+            )
+
+    print(
+        f"\n🏁 [Sweep Summary] Core (rel:core)={totals['core']} | "
+        f"Case study (rel:case-study)={totals['case_study']} | "
+        f"Pushed to Zotero={totals['pushed']} | "
+        f"Rejected (passing_mention)={totals['rejected']}"
+    )
+    return totals
+
+
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="OpenAlex Stage-1 full-pool direct sweep script (bypasses the 450-query keyword matrix)"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Read-only preview: scan and count unharvested candidates without calling the LLM or writing to Zotero/caches",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Maximum number of new candidates to process in this run (default: unlimited full Stage-1 sweep)",
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=50,
+        help="Push to Zotero and checkpoint local caches after every N candidates (1–50, default: 50)",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None) -> None:
+    args = parse_args(argv)
+    if args.limit is not None and args.limit <= 0:
+        raise SystemExit("❌ --limit must be a positive integer.")
+    if not core.ROOT_COLLECTION_KEY:
+        raise SystemExit("❌ ZOTERO_ROOT_COLLECTION_KEY is not configured in .env.")
+
+    if core.OPENALEX_API_KEY:
+        print("🔑 OpenAlex API Key loaded ($1.00/day dedicated quota mode)")
+    else:
+        print("⚠️ OPENALEX_API_KEY not configured; using shared anonymous IP quota mode")
+    print(f"🤖 LLM Provider: {core.LLM_PROVIDER} | Model: {core.LLM_MODEL}")
+
+    existing_titles, existing_dois = core.get_existing_zotero_cache(
+        core.ROOT_COLLECTION_KEY
+    )
+    rejected_titles, rejected_dois = core.load_rejected_cache()
+    seen_titles = existing_titles | rejected_titles
+    seen_dois = existing_dois | rejected_dois
+    if rejected_titles or rejected_dois:
+        print(
+            f"🛡️ Loaded rejection cache {core.REJECTED_CACHE_FILE} "
+            f"({len(rejected_titles)} rejected/excluded titles will be skipped)."
+        )
+
+    try:
+        papers, stats = fetch_stage1_pool(
+            existing_titles=seen_titles,
+            existing_dois=seen_dois,
+            limit=args.limit,
+        )
+    except core.OpenAlexQuotaExceededError as e:
+        papers = e.partial_papers
+        stats = {
+            "total_hits": 0,
+            "pages_scanned": 0,
+            "raw_scanned": 0,
+            "selected": len(papers),
+        }
+        print(f"\n🛑 [Circuit Breaker] {e}! Proceeding with {len(papers)} already-collected candidate(s).")
+    except core.OpenAlexRequestError as e:
+        print(f"❌ OpenAlex sweep request failed: {e}")
+        return
+
+    if args.dry_run:
+        print_dry_run_summary(papers, stats)
+        return
+
+    if not papers:
+        print("🎉 OpenAlex Stage-1 exact-phrase pool is completely exhausted; no new unharvested papers found.")
+        return
+
+    print(
+        f"\n✅ Sweep complete! Found {len(papers)} new candidate(s); "
+        f"starting LLM classification and Zotero ingestion in chunks of {min(max(1, args.chunk_size), 50)}..."
+    )
+    classify_and_ingest_in_chunks(papers, chunk_size=args.chunk_size)
+
+
+if __name__ == "__main__":
+    main()

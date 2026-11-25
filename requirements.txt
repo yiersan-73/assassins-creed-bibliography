@@ -1,0 +1,5 @@
+pyzotero>=1.10.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+# Optional: only required when LLM_PROVIDER=anthropic
+# anthropic>=1.0.0
