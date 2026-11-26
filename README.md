@@ -4,10 +4,10 @@ English | [简体中文](./README.zh-CN.md)
 
 An open, Zotero-backed scholarly bibliography of **586** curated academic works on *Assassin's Creed* (Game Studies & Digital Humanities), maintained with a reusable OpenAlex + Multi-LLM curation pipeline.
 
-[![Open Zotero Library](https://img.shields.io/badge/Zotero_Library-586_Works-CC2936?style=flat-square&logo=zotero&logoColor=white)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Taxonomy](https://img.shields.io/badge/Taxonomy-58_Collections_%7C_32_Tags-2B6CB0?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Languages](https://img.shields.io/badge/Languages-9_Scholarly_Languages-0D9488?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Multi-LLM Pipeline](https://img.shields.io/badge/Pipeline-OpenAI_%7C_Claude_%7C_Ollama-10A37F?style=flat-square)](#-automated-curation-pipeline-for-developers) [![License: MIT](https://img.shields.io/badge/Code_License-MIT-F7DF1E?style=flat-square)](./LICENSE)
+[![Web Catalog](https://img.shields.io/badge/Web_Catalog-Interactive_Search-2563EB?style=flat-square&logo=githubpages&logoColor=white)](https://yiersan-73.github.io/assassins-creed-bibliography/) [![Open Zotero Library](https://img.shields.io/badge/Zotero_Library-586_Works-CC2936?style=flat-square&logo=zotero&logoColor=white)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Taxonomy](https://img.shields.io/badge/Taxonomy-58_Collections_%7C_32_Tags-2B6CB0?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Languages](https://img.shields.io/badge/Languages-9_Scholarly_Languages-0D9488?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Multi-LLM Pipeline](https://img.shields.io/badge/Pipeline-OpenAI_%7C_Claude_%7C_Ollama-10A37F?style=flat-square)](#-automated-curation-pipeline-for-developers) [![License: MIT](https://img.shields.io/badge/Code_License-MIT-F7DF1E?style=flat-square)](./LICENSE)
 
 > [!TIP]
-> **Looking for papers or writing a literature review? No login or coding needed!** Browse, filter across 58 folders & 32 tags, and export APA / GB/T 7714 citations directly in the **[Zotero Public Group (586 Works)](https://www.zotero.org/groups/6777746/assassins_creed_research/library)**.
+> **Looking for papers or writing a literature review? No login or coding needed!** Search 4D facets and copy citations instantly in the **[Interactive Web Catalog](https://yiersan-73.github.io/assassins-creed-bibliography/)**, or browse all 58 folders & 32 tags directly inside the **[Zotero Public Group (586 Works)](https://www.zotero.org/groups/6777746/assassins_creed_research/library)**.
 
 ---
 
@@ -124,6 +124,7 @@ flowchart LR
 - **Config-Driven & Topic-Agnostic**: All search phrases, query matrices, taxonomy mappings, and prompt rules live in `domain_config.json` and `taxonomy.json`.
 - **Provider-Agnostic LLM Engine**: Supports OpenAI-compatible endpoints (OpenAI, DeepSeek, Gemini, Qwen, OpenRouter, local Ollama) alongside Anthropic Claude with prompt caching.
 - **OpenAlex Free-Plan Incremental Sync**: `openalex_incremental.py` combines `from_publication_date` + 30-day safety overlap (`publication`) and 4-call `full-diff` modes.
+- **Sustainable Catalog Auto-Sync**: `export_catalog.py` (`python export_catalog.py --group-id 6777746 --skip-if-unchanged`) & `.github/workflows/sync-catalog.yml` export sanitized CC0/CC BY snapshots (`data/`, `docs/data/catalog.json`) weekly with zero API secrets.
 
 ### Project Structure
 
@@ -132,8 +133,13 @@ flowchart LR
 | `openalextest.py` | Shared core engine (OpenAlex, pre-filter, Multi-LLM, Crossref, Zotero) | No |
 | `openalex_sweep.py` | Stage-1 full-pool sweep CLI (`--dry-run`, `--limit`, `--chunk-size`) | No |
 | `openalex_incremental.py` | Free-Plan incremental monitor (`publication` & `full-diff` modes) | No |
+| `export_catalog.py` | Public Zotero group exporter (`data/` CSV/JSON + web `catalog.json`) | Pass `--group-id` |
+| `docs/index.html` | Zero-dependency GitHub Pages 4D interactive web catalog | No |
+| `data/` | CC0/CC BY sanitized `bibliography.csv`, `bibliography.json`, & data card | Auto-generated |
 | `domain_config.json` | Search phrases, query matrix, tag rules, & domain filters | Yes |
 | `taxonomy.json` | Zotero 8-character Collection Keys across custom dimensions | Yes |
+| `CITATION.cff` | Standard GitHub citation metadata (`Cite this repository`) | Yes |
+| `.github/workflows/sync-catalog.yml` | Weekly zero-secret GitHub Actions Zotero-to-Pages sync | Update `--group-id` |
 | `.env.example` | Credential & Multi-LLM configuration template | Copy to `.env` |
 | `requirements.txt` | Minimal dependencies (`pyzotero`, `requests`, `python-dotenv`) | No |
 

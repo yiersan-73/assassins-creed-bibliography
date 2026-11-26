@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assassin's Creed Open Academic Bibliography</title>
+  <meta name="description" content="Open, Zotero-backed scholarly bibliography on Assassin's Creed (Game Studies & Digital Humanities) with 4D faceted search and instant APA / GB/T 7714 / BibTeX export.">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-alt: #f0f2f6;
+      --border: #dfe3ea;
+      --text: #1b2430;
+      --muted: #5a6577;
+      --accent: #b82430;
+      --accent-soft: rgba(184, 36, 48, 0.1);
+      --blue: #2563eb;
+      --blue-soft: rgba(37, 99, 235, 0.1);
+      --teal: #0d9488;
+      --teal-soft: rgba(13, 148, 136, 0.1);
+      --shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+      --radius: 10px;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0e1116;
+      --surface: #161b22;
+      --surface-alt: #1f2630;
+      --border: #2c3543;
+      --text: #e6edf3;
+      --muted: #9aa6b8;
+      --accent: #e04f5f;
+      --accent-soft: rgba(224, 79, 95, 0.16);
+      --blue: #60a5fa;
+      --blue-soft: rgba(96, 165, 250, 0.15);
+      --teal: #2dd4bf;
+      --teal-soft: rgba(45, 212, 191, 0.15);
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px 18px 48px;
+    }
+
+    /* Header */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .brand h1 {
+      margin: 0 0 6px;
+      font-size: 1.65rem;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 720px;
+    }
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn:hover { border-color: var(--blue); text-decoration: none; }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+    .btn-primary:hover { opacity: 0.92; border-color: var(--accent); }
+    .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+
+    /* Stats Bar */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+    .stat-val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .stat-lbl {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Main Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 14px;
+      max-height: calc(100vh - 28px);
+      overflow-y: auto;
+    }
+    @media (max-width: 960px) {
+      .sidebar { position: static; max-height: none; }
+    }
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .sidebar-header h2 { margin: 0; font-size: 1rem; }
+
+    .filter-block {
+      border-top: 1px solid var(--border);
+      padding: 10px 0;
+    }
+    .filter-block:first-of-type { border-top: none; padding-top: 0; }
+    .filter-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+
+    .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--text);
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    details.dim-group {
+      border-top: 1px solid var(--border);
+      padding: 8px 0;
+    }
+    details.dim-group summary {
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      list-style: none;
+    }
+    details.dim-group summary::-webkit-details-marker { display: none; }
+    .dim-options {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 230px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .facet-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.83rem;
+      padding: 3px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .facet-row:hover { background: var(--surface-alt); }
+    .facet-left { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .facet-left span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .facet-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--surface-alt);
+      padding: 1px 6px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    /* Results Area */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.95rem;
+      box-shadow: var(--shadow);
+    }
+    .search-input:focus { outline: 2px solid var(--blue-soft); border-color: var(--blue); }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .toolbar-left { font-size: 0.88rem; color: var(--muted); }
+    .toolbar-left strong { color: var(--text); }
+    .toolbar-right { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--text);
+      font-size: 0.83rem;
+    }
+
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .active-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Item Cards */
+    .cards { display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px 16px;
+      box-shadow: var(--shadow);
+    }
+    .card-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .badge {
+      font-size: 0.74rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .badge-core { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
+    .badge-case { background: var(--teal-soft); color: var(--teal); border-color: transparent; font-weight: 600; }
+    .badge-year { font-weight: 600; color: var(--text); }
+
+    .card-title {
+      margin: 0 0 6px;
+      font-size: 1.04rem;
+      font-weight: 600;
+      line-height: 1.38;
+    }
+    .card-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .card-summary {
+      font-size: 0.87rem;
+      background: var(--surface-alt);
+      border-left: 3px solid var(--blue);
+      padding: 8px 11px;
+      border-radius: 0 6px 6px 0;
+      margin: 8px 0 10px;
+    }
+    .card-summary small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+      margin-top: 3px;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .tag-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .tag-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 34px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1b2430;
+      color: #ffffff;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <h1 id="ui-title">Assassin's Creed Open Academic Bibliography</h1>
+        <p id="ui-subtitle">Search across curated Game Studies &amp; Digital Humanities works with 4D facets and 1-click citations.</p>
+      </div>
+      <div class="top-actions">
+        <a id="link-zotero" class="btn btn-primary" href="https://www.zotero.org/groups/6777746/assassins_creed_research/library" target="_blank" rel="noopener">Zotero Library</a>
+        <a class="btn" href="https://raw.githubusercontent.com/yiersan-73/assassins-creed-bibliography/main/data/bibliography.csv" target="_blank" rel="noopener" id="ui-dl-csv">Full CSV</a>
+        <a class="btn" href="https://github.com/yiersan-73/assassins-creed-bibliography" target="_blank" rel="noopener">GitHub</a>
+        <button class="btn" id="btn-lang" type="button">中文</button>
+        <button class="btn" id="btn-theme" type="button">Dark</button>
+      </div>
+    </header>
+
+    <section class="stats-grid" id="stats-grid"></section>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2 id="ui-filters-title">Filters</h2>
+          <button class="btn btn-sm" id="btn-reset" type="button">Reset</button>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title" id="ui-rel-title">Relevance</div>
+          <div class="chip-group" id="rel-chips"></div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title" id="ui-year-title">Year Window</div>
+          <div class="chip-group" id="year-chips"></div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title" id="ui-doctype-title">Document Type</div>
+          <div class="chip-group" id="doctype-chips"></div>
+        </div>
+
+        <div id="dim-accordions"></div>
+      </aside>
+
+      <main>
+        <div class="search-bar">
+          <input class="search-input" id="search-input" type="search" placeholder="Search title, author, journal/venue, DOI, tags, or AI summary...">
+        </div>
+
+        <div class="toolbar">
+          <div class="toolbar-left" id="result-count">Loading catalog...</div>
+          <div class="toolbar-right">
+            <select id="sort-select" aria-label="Sort works">
+              <option value="year_desc">Year (Newest)</option>
+              <option value="year_asc">Year (Oldest)</option>
+              <option value="cite_desc">Citations (High to Low)</option>
+              <option value="title_asc">Title (A-Z)</option>
+            </select>
+            <button class="btn btn-sm" id="btn-export-bib" type="button">Export .bib</button>
+            <button class="btn btn-sm" id="btn-export-csv" type="button">Export .csv</button>
+          </div>
+        </div>
+
+        <div class="active-filters" id="active-filters"></div>
+        <div class="cards" id="cards-container"></div>
+        <div class="pagination" id="pagination"></div>
+      </main>
+    </div>
+
+    <footer>
+      <div id="footer-compliance"></div>
+      <div id="footer-sync"></div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    const I18N = {
+      en: {
+        title: "Assassin's Creed Open Academic Bibliography",
+        subtitle: "Search across curated Game Studies & Digital Humanities works with 4D facets and 1-click citations.",
+        zoteroBtn: "Zotero Library",
+        dlCsv: "Full CSV",
+        filtersTitle: "Filters",
+        reset: "Reset",
+        relTitle: "Relevance",
+        yearTitle: "Year Window",
+        doctypeTitle: "Document Type",
+        searchPh: "Search title, author, journal/venue, DOI, tags, or AI summary...",
+        exportBib: "Export .bib",
+        exportCsv: "Export .csv",
+        statWorks: "Curated Works",
+        statCols: "4D Subcollections",
+        statLangs: "Scholarly Languages",
+        statRecent: "2024–2026 Works",
+        statVer: "Zotero Snapshot",
+        all: "All",
+        core: "Core Study",
+        case_study: "Case Study",
+        y24: "2024–2026",
+        y20: "2020–2023",
+        y19: "≤ 2019",
+        showing: (a, b, c) => `Showing <strong>${a}–${b}</strong> of <strong>${c}</strong> works`,
+        zero: "No matching scholarly works. Try clearing a filter or broadening your query.",
+        aiPrefix: "AI Triage Summary:",
+        aiNote: "For rapid screening only — verify claims against the original source before citing.",
+        copyApa: "APA 7th",
+        copyGb: "GB/T 7714",
+        copyBib: "BibTeX",
+        openSrc: "Open Source / DOI",
+        copied: "Copied to clipboard!",
+        exported: "Filtered export downloaded!",
+        citations: "Citations",
+        prev: "Prev",
+        next: "Next",
+        pageOf: (p, t) => `Page ${p} / ${t}`,
+        compliance: "Metadata under CC0 1.0; curated 4D taxonomy & AI summaries under CC BY 4.0. Publisher abstracts & PDFs are excluded.",
+        missingLink: "Missing a paper? Suggest via GitHub Issues",
+        sortYearDesc: "Year (Newest)",
+        sortYearAsc: "Year (Oldest)",
+        sortCiteDesc: "Citations (High to Low)",
+        sortTitleAsc: "Title (A-Z)"
+      },
+      zh: {
+        title: "《刺客信条》开放学术文献库",
+        subtitle: "面向游戏研究与数字人文的四维分类检索站，支持实时筛选与一键导出中英文标准引文。",
+        zoteroBtn: "Zotero 公开库",
+        dlCsv: "下载全量 CSV",
+        filtersTitle: "多维筛选",
+        reset: "重置筛选",
+        relTitle: "关联度 (Relevance)",
+        yearTitle: "发表年份窗口",
+        doctypeTitle: "文献类型",
+        searchPh: "检索标题、作者、期刊/出版社、DOI、标签或英文 AI 速读摘要...",
+        exportBib: "导出当前 .bib",
+        exportCsv: "导出当前 .csv",
+        statWorks: "精选文献总数",
+        statCols: "四维叶子类目",
+        statLangs: "覆盖学术语种",
+        statRecent: "2024–2026 前沿文献",
+        statVer: "Zotero 快照版本",
+        all: "全部",
+        core: "核心专论 (Core)",
+        case_study: "案例研究 (Case Study)",
+        y24: "2024–2026",
+        y20: "2020–2023",
+        y19: "2019 及以前",
+        showing: (a, b, c) => `当前显示第 <strong>${a}–${b}</strong> 篇，共匹配 <strong>${c}</strong> 篇`,
+        zero: "未找到符合当前组合条件的文献，请尝试放宽筛选或重置。",
+        aiPrefix: "AI 速读摘要：",
+        aiNote: "仅供快速初筛，正式论文引用前请务必核对原文全文。",
+        copyApa: "复制 APA 7th",
+        copyGb: "复制 GB/T 7714",
+        copyBib: "复制 BibTeX",
+        openSrc: "原文 / DOI",
+        copied: "已复制到剪贴板",
+        exported: "已导出当前筛选结果",
+        citations: "被引",
+        prev: "上一页",
+        next: "下一页",
+        pageOf: (p, t) => `第 ${p} / ${t} 页`,
+        compliance: "题录元数据采用 CC0 1.0，四维分类与 AI 摘要采用 CC BY 4.0；已剥离出版商原始摘要与 PDF。",
+        missingLink: "发现遗漏文献或有误？点此提 Issue 补充",
+        sortYearDesc: "年份（从新到旧）",
+        sortYearAsc: "年份（从旧到新）",
+        sortCiteDesc: "被引次数（从高到低）",
+        sortTitleAsc: "标题（A-Z）"
+      }
+    };
+
+    const ITEM_TYPE_MAP = {
+      journalArticle: "Journal Article",
+      thesis: "Thesis",
+      bookSection: "Book Chapter",
+      conferencePaper: "Conference Paper",
+      book: "Monograph"
+    };
+
+    const state = {
+      catalog: null,
+      lang: localStorage.getItem("ac_bib_lang") || (navigator.language && navigator.language.startsWith("zh") ? "zh" : "en"),
+      theme: localStorage.getItem("ac_bib_theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+      query: "",
+      relevance: "",
+      yearWindow: "",
+      docType: "",
+      dims: {},
+      sort: "year_desc",
+      page: 1,
+      pageSize: 25,
+      filtered: []
+    };
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 1900);
+    }
+
+    function applyTheme() {
+      document.documentElement.setAttribute("data-theme", state.theme);
+      document.getElementById("btn-theme").textContent = state.theme === "dark" ? (state.lang === "zh" ? "浅色" : "Light") : (state.lang === "zh" ? "深色" : "Dark");
+      localStorage.setItem("ac_bib_theme", state.theme);
+    }
+
+    function formatApaAuthors(authors) {
+      if (!authors || !authors.length) return "Unknown";
+      const fmt = authors.map((a) => {
+        if (a.name) return a.name;
+        const initials = (a.first || "").split(/\s+/).filter(Boolean).map((p) => p[0].toUpperCase() + ".").join(" ");
+        return initials ? `${a.last}, ${initials}` : (a.last || "");
+      }).filter(Boolean);
+      if (fmt.length === 1) return fmt[0];
+      if (fmt.length <= 20) return fmt.slice(0, -1).join(", ") + ", & " + fmt[fmt.length - 1];
+      return fmt.slice(0, 19).join(", ") + ", ... " + fmt[fmt.length - 1];
+    }
+
+    function buildApaCitation(it) {
+      const auth = formatApaAuthors(it.authors);
+      const yr = it.year ? `(${it.year})` : "(n.d.)";
+      const venue = it.venue ? `${it.venue}` : "";
+      const vol = it.volume ? `, ${it.volume}` : "";
+      const iss = it.issue ? `(${it.issue})` : "";
+      const pgs = it.pages ? `, ${it.pages}` : "";
+      const pub = it.item_type === "bookSection" && it.publisher ? ` ${it.publisher}.` : "";
+      const link = it.doi ? ` https://doi.org/${it.doi}` : (it.url ? ` ${it.url}` : "");
+      return `${auth} ${yr}. ${it.title}. ${venue}${vol}${iss}${pgs}.${pub}${link}`.replace(/\s+/g, " ").trim();
+    }
+
+    function buildGbCitation(it) {
+      const names = (it.authors || []).map((a) => a.name || [a.last, a.first].filter(Boolean).join(" ")).filter(Boolean);
+      const auth = names.length > 3 ? `${names.slice(0, 3).join(", ")}, 等` : (names.join(", ") || "佚名");
+      const markMap = { journalArticle: "[J]", thesis: "[D]", bookSection: "[M]", conferencePaper: "[C]", book: "[M]" };
+      const mark = markMap[it.item_type] || "[EB/OL]";
+      const yr = it.year || "n.d.";
+      const venue = it.venue || it.publisher || "";
+      const vol = it.volume ? `, ${it.volume}` : "";
+      const iss = it.issue ? `(${it.issue})` : "";
+      const pgs = it.pages ? `: ${it.pages}` : "";
+      const link = it.doi ? ` DOI:${it.doi}.` : (it.url ? ` ${it.url}.` : "");
+      return `${auth}. ${it.title}${mark}. ${venue}, ${yr}${vol}${iss}${pgs}.${link}`.replace(/\s+/g, " ").trim();
+    }
+
+    function buildBibtex(it) {
+      const typeMap = {
+        journalArticle: "article",
+        thesis: "phdthesis",
+        bookSection: "incollection",
+        conferencePaper: "inproceedings",
+        book: "book"
+      };
+      const btype = typeMap[it.item_type] || "misc";
+      const firstLast = (it.authors && it.authors[0] && (it.authors[0].last || it.authors[0].name) || "work")
+        .toLowerCase().replace(/[^a-z0-9]/g, "");
+      const citeKey = `${firstLast}_${it.year || "nd"}_${it.key.toLowerCase()}`;
+      const auth = (it.authors || []).map((a) => a.name || `${a.last || ""}, ${a.first || ""}`.replace(/^,\s*/, "")).join(" and ");
+      const lines = [`@${btype}{${citeKey},`, `  title = {${it.title}},`];
+      if (auth) lines.push(`  author = {${auth}},`);
+      if (it.year) lines.push(`  year = {${it.year}},`);
+      if (it.item_type === "journalArticle" && it.venue) lines.push(`  journal = {${it.venue}},`);
+      else if (it.item_type === "bookSection" && it.venue) lines.push(`  booktitle = {${it.venue}},`);
+      else if (it.item_type === "conferencePaper" && it.venue) lines.push(`  booktitle = {${it.venue}},`);
+      else if (it.item_type === "thesis" && it.venue) lines.push(`  school = {${it.venue}},`);
+      if (it.publisher) lines.push(`  publisher = {${it.publisher}},`);
+      if (it.volume) lines.push(`  volume = {${it.volume}},`);
+      if (it.issue) lines.push(`  number = {${it.issue}},`);
+      if (it.pages) lines.push(`  pages = {${it.pages}},`);
+      if (it.doi) lines.push(`  doi = {${it.doi}},`);
+      if (it.url) lines.push(`  url = {${it.url}},`);
+      lines[lines.length - 1] = lines[lines.length - 1].replace(/,$/, "");
+      lines.push("}");
+      return lines.join("\n");
+    }
+
+    function matchesFilters(it, omitDim) {
+      if (state.query) {
+        if (!it._searchBlob.includes(state.query)) return false;
+      }
+      if (state.relevance && it.relevance !== state.relevance) return false;
+      if (state.docType && it.doc_type !== state.docType) return false;
+      if (state.yearWindow) {
+        const y = it.year || 0;
+        if (state.yearWindow === "2024-2026" && y < 2024) return false;
+        if (state.yearWindow === "2020-2023" && (y < 2020 || y > 2023)) return false;
+        if (state.yearWindow === "<=2019" && (y === 0 || y > 2019)) return false;
+      }
+      for (const [dim, selectedSet] of Object.entries(state.dims)) {
+        if (dim === omitDim || !selectedSet || selectedSet.size === 0) continue;
+        const itemVals = (it.dimensions && it.dimensions[dim]) || [];
+        let hit = false;
+        for (const v of selectedSet) {
+          if (itemVals.includes(v)) { hit = true; break; }
+        }
+        if (!hit) return false;
+      }
+      return true;
+    }
+
+    function applyFiltersAndSort() {
+      const res = state.catalog.items.filter((it) => matchesFilters(it, null));
+      if (state.sort === "year_desc") res.sort((a, b) => (b.year || 0) - (a.year || 0) || a.title.localeCompare(b.title));
+      else if (state.sort === "year_asc") res.sort((a, b) => (a.year || 9999) - (b.year || 9999) || a.title.localeCompare(b.title));
+      else if (state.sort === "cite_desc") res.sort((a, b) => (b.citations || 0) - (a.citations || 0) || (b.year || 0) - (a.year || 0));
+      else if (state.sort === "title_asc") res.sort((a, b) => a.title.localeCompare(b.title));
+      state.filtered = res;
+      const totalPages = Math.max(1, Math.ceil(res.length / state.pageSize));
+      if (state.page > totalPages) state.page = 1;
+      renderAll();
+    }
+
+    function toggleDimOption(dim, sub) {
+      if (!state.dims[dim]) state.dims[dim] = new Set();
+      if (state.dims[dim].has(sub)) state.dims[dim].delete(sub);
+      else state.dims[dim].add(sub);
+      state.page = 1;
+      applyFiltersAndSort();
+    }
+
+    function renderStaticText() {
+      const t = I18N[state.lang];
+      document.documentElement.lang = state.lang === "zh" ? "zh-CN" : "en";
+      document.getElementById("ui-title").textContent = t.title;
+      document.getElementById("ui-subtitle").textContent = t.subtitle;
+      document.getElementById("link-zotero").textContent = t.zoteroBtn;
+      document.getElementById("ui-dl-csv").textContent = t.dlCsv;
+      document.getElementById("btn-lang").textContent = state.lang === "zh" ? "English" : "中文";
+      document.getElementById("ui-filters-title").textContent = t.filtersTitle;
+      document.getElementById("btn-reset").textContent = t.reset;
+      document.getElementById("ui-rel-title").textContent = t.relTitle;
+      document.getElementById("ui-year-title").textContent = t.yearTitle;
+      document.getElementById("ui-doctype-title").textContent = t.doctypeTitle;
+      document.getElementById("search-input").placeholder = t.searchPh;
+      document.getElementById("btn-export-bib").textContent = t.exportBib;
+      document.getElementById("btn-export-csv").textContent = t.exportCsv;
+      const opts = document.getElementById("sort-select").options;
+      opts[0].textContent = t.sortYearDesc;
+      opts[1].textContent = t.sortYearAsc;
+      opts[2].textContent = t.sortCiteDesc;
+      opts[3].textContent = t.sortTitleAsc;
+      applyTheme();
+    }
+
+    function renderStats() {
+      if (!state.catalog) return;
+      const t = I18N[state.lang];
+      const m = state.catalog.meta;
+      const st = state.catalog.stats;
+      const langCount = (state.catalog.taxonomy_tree.Languages || []).length;
+      const cards = [
+        { v: m.total_works, l: t.statWorks },
+        { v: m.leaf_collections, l: t.statCols },
+        { v: langCount, l: t.statLangs },
+        { v: st.recent_2024_plus, l: t.statRecent },
+        { v: m.zotero_library_version ? `v${m.zotero_library_version}` : "-", l: t.statVer }
+      ];
+      document.getElementById("stats-grid").innerHTML = cards.map((c) => `
+        <div class="stat-card">
+          <div class="stat-val">${escapeHtml(c.v)}</div>
+          <div class="stat-lbl">${escapeHtml(c.l)}</div>
+        </div>
+      `).join("");
+
+      if (m.zotero_group_url) {
+        document.getElementById("link-zotero").href = m.zotero_group_url;
+      }
+      document.getElementById("footer-compliance").innerHTML =
+        `${escapeHtml(t.compliance)} · <a href="https://github.com/yiersan-73/assassins-creed-bibliography/issues" target="_blank" rel="noopener">${escapeHtml(t.missingLink)}</a>`;
+      document.getElementById("footer-sync").textContent = `Snapshot: ${(m.generated_at || "").slice(0, 10)} (Zotero v${m.zotero_library_version || "?"})`;
+    }
+
+    function renderFacetControls() {
+      const t = I18N[state.lang];
+      const relOpts = [["", t.all], ["core", t.core], ["case_study", t.case_study]];
+      document.getElementById("rel-chips").innerHTML = relOpts.map(([val, lbl]) =>
+        `<button type="button" class="chip ${state.relevance === val ? "active" : ""}" data-rel="${escapeHtml(val)}">${escapeHtml(lbl)}</button>`
+      ).join("");
+
+      const yrOpts = [["", t.all], ["2024-2026", t.y24], ["2020-2023", t.y20], ["<=2019", t.y19]];
+      document.getElementById("year-chips").innerHTML = yrOpts.map(([val, lbl]) =>
+        `<button type="button" class="chip ${state.yearWindow === val ? "active" : ""}" data-year="${escapeHtml(val)}">${escapeHtml(lbl)}</button>`
+      ).join("");
+
+      const dtKeys = Object.keys(state.catalog.stats.by_doc_type || {});
+      document.getElementById("doctype-chips").innerHTML =
+        `<button type="button" class="chip ${state.docType === "" ? "active" : ""}" data-dt="">${escapeHtml(t.all)}</button>` +
+        dtKeys.map((dt) => `<button type="button" class="chip ${state.docType === dt ? "active" : ""}" data-dt="${escapeHtml(dt)}">${escapeHtml(dt)}</button>`).join("");
+
+      const tree = state.catalog.taxonomy_tree || {};
+      const openMap = {};
+      document.querySelectorAll("details.dim-group").forEach((el) => { openMap[el.dataset.dim] = el.open; });
+
+      const accHtml = Object.entries(tree).map(([dim, subs], idx) => {
+        const subsetItems = state.catalog.items.filter((it) => matchesFilters(it, dim));
+        const counts = {};
+        subsetItems.forEach((it) => {
+          ((it.dimensions && it.dimensions[dim]) || []).forEach((s) => { counts[s] = (counts[s] || 0) + 1; });
+        });
+        const sortedSubs = [...subs].sort((a, b) => (counts[b] || 0) - (counts[a] || 0) || a.localeCompare(b));
+        const selCount = (state.dims[dim] && state.dims[dim].size) || 0;
+        const isOpen = openMap[dim] !== undefined ? openMap[dim] : (idx === 0 || selCount > 0);
+        const rows = sortedSubs.map((sub) => {
+          const checked = state.dims[dim] && state.dims[dim].has(sub) ? "checked" : "";
+          const c = counts[sub] || 0;
+          return `
+            <label class="facet-row">
+              <span class="facet-left">
+                <input type="checkbox" data-dim="${escapeHtml(dim)}" data-sub="${escapeHtml(sub)}" ${checked}>
+                <span title="${escapeHtml(sub)}">${escapeHtml(sub)}</span>
+              </span>
+              <span class="facet-count">${c}</span>
+            </label>
+          `;
+        }).join("");
+        return `
+          <details class="dim-group" data-dim="${escapeHtml(dim)}" ${isOpen ? "open" : ""}>
+            <summary>
+              <span>${escapeHtml(dim)} ${selCount ? `(${selCount})` : ""}</span>
+              <span>▾</span>
+            </summary>
+            <div class="dim-options">${rows}</div>
+          </details>
+        `;
+      }).join("");
+      document.getElementById("dim-accordions").innerHTML = accHtml;
+    }
+
+    function renderActivePills() {
+      const pills = [];
+      if (state.query) pills.push(`<button class="active-pill" data-clear="query">"${escapeHtml(state.query)}" ×</button>`);
+      if (state.relevance) pills.push(`<button class="active-pill" data-clear="relevance">rel:${escapeHtml(state.relevance)} ×</button>`);
+      if (state.yearWindow) pills.push(`<button class="active-pill" data-clear="yearWindow">${escapeHtml(state.yearWindow)} ×</button>`);
+      if (state.docType) pills.push(`<button class="active-pill" data-clear="docType">type:${escapeHtml(state.docType)} ×</button>`);
+      for (const [dim, set] of Object.entries(state.dims)) {
+        for (const sub of set) {
+          pills.push(`<button class="active-pill" data-clear-dim="${escapeHtml(dim)}" data-clear-sub="${escapeHtml(sub)}">${escapeHtml(dim)}: ${escapeHtml(sub)} ×</button>`);
+        }
+      }
+      document.getElementById("active-filters").innerHTML = pills.join("");
+    }
+
+    function renderCards() {
+      const t = I18N[state.lang];
+      const total = state.filtered.length;
+      const startIdx = (state.page - 1) * state.pageSize;
+      const endIdx = Math.min(startIdx + state.pageSize, total);
+      document.getElementById("result-count").innerHTML = total ? t.showing(startIdx + 1, endIdx, total) : t.showing(0, 0, 0);
+
+      const container = document.getElementById("cards-container");
+      if (!total) {
+        container.innerHTML = `<div class="empty-state">${escapeHtml(t.zero)}</div>`;
+        document.getElementById("pagination").innerHTML = "";
+        return;
+      }
+
+      const slice = state.filtered.slice(startIdx, endIdx);
+      container.innerHTML = slice.map((it, localIdx) => {
+        const globalIdx = startIdx + localIdx;
+        const relBadge = it.relevance === "core"
+          ? `<span class="badge badge-core">rel:core</span>`
+          : (it.relevance ? `<span class="badge badge-case">rel:case-study</span>` : "");
+        const yearBadge = `<span class="badge badge-year">${it.year || "n.d."}</span>`;
+        const typeBadge = `<span class="badge">${escapeHtml(ITEM_TYPE_MAP[it.item_type] || it.doc_type)}</span>`;
+        const citeBadge = it.citations !== null && it.citations !== undefined
+          ? `<span class="badge">${escapeHtml(t.citations)}: ${it.citations}</span>`
+          : "";
+
+        const bibBits = [
+          it.author_display,
+          it.venue,
+          [it.volume ? `Vol. ${it.volume}` : "", it.issue ? `No. ${it.issue}` : "", it.pages ? `pp. ${it.pages}` : ""].filter(Boolean).join(", ")
+        ].filter(Boolean).join(" · ");
+
+        const dimPills = [];
+        for (const [dim, subs] of Object.entries(it.dimensions || {})) {
+          subs.forEach((sub) => {
+            dimPills.push(`<button type="button" class="tag-btn" data-quick-dim="${escapeHtml(dim)}" data-quick-sub="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`);
+          });
+        }
+
+        const summaryHtml = it.ai_summary
+          ? `<div class="card-summary"><strong>${escapeHtml(t.aiPrefix)}</strong> ${escapeHtml(it.ai_summary)}<small>${escapeHtml(t.aiNote)}</small></div>`
+          : "";
+
+        const href = it.url || (it.doi ? `https://doi.org/${it.doi}` : "");
+        const titleHtml = href
+          ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a>`
+          : escapeHtml(it.title);
+
+        return `
+          <article class="card">
+            <div class="card-top">${yearBadge}${typeBadge}${relBadge}${citeBadge}</div>
+            <h3 class="card-title">${titleHtml}</h3>
+            <div class="card-meta">${escapeHtml(bibBits)}</div>
+            ${summaryHtml}
+            <div class="card-tags">${dimPills.join("")}</div>
+            <div class="card-actions">
+              <button type="button" class="btn btn-sm" data-copy="apa" data-idx="${globalIdx}">${escapeHtml(t.copyApa)}</button>
+              <button type="button" class="btn btn-sm" data-copy="gb" data-idx="${globalIdx}">${escapeHtml(t.copyGb)}</button>
+              <button type="button" class="btn btn-sm" data-copy="bib" data-idx="${globalIdx}">${escapeHtml(t.copyBib)}</button>
+              ${href ? `<a class="btn btn-sm" href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(t.openSrc)}</a>` : ""}
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+      if (totalPages <= 1) {
+        document.getElementById("pagination").innerHTML = "";
+      } else {
+        document.getElementById("pagination").innerHTML = `
+          <button type="button" class="btn btn-sm" id="pg-prev" ${state.page <= 1 ? "disabled" : ""}>${escapeHtml(t.prev)}</button>
+          <span style="font-size:0.86rem;color:var(--muted)">${escapeHtml(t.pageOf(state.page, totalPages))}</span>
+          <button type="button" class="btn btn-sm" id="pg-next" ${state.page >= totalPages ? "disabled" : ""}>${escapeHtml(t.next)}</button>
+        `;
+      }
+    }
+
+    function renderAll() {
+      renderStats();
+      renderFacetControls();
+      renderActivePills();
+      renderCards();
+    }
+
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast(I18N[state.lang].exported);
+    }
+
+    function exportFilteredCsv() {
+      const dims = Object.keys(state.catalog.taxonomy_tree || {});
+      const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const header = ["zotero_key", "item_type", "title", "authors", "year", "venue", "doi", "url", "relevance", "doc_type", ...dims, "ai_summary"];
+      const rows = [header.map(esc).join(",")];
+      state.filtered.forEach((it) => {
+        const d = it.dimensions || {};
+        rows.push([
+          it.key, it.item_type, it.title, it.author_display, it.year ?? "", it.venue,
+          it.doi, it.url, it.relevance, it.doc_type,
+          ...dims.map((k) => (d[k] || []).join("; ")),
+          it.ai_summary
+        ].map(esc).join(","));
+      });
+      downloadFile("filtered_bibliography.csv", "\uFEFF" + rows.join("\n"), "text/csv;charset=utf-8;");
+    }
+
+    function exportFilteredBib() {
+      const content = state.filtered.map(buildBibtex).join("\n\n");
+      downloadFile("filtered_bibliography.bib", content, "application/x-bibtex;charset=utf-8;");
+    }
+
+    async function copyText(txt) {
+      try {
+        await navigator.clipboard.writeText(txt);
+        showToast(I18N[state.lang].copied);
+      } catch (_) {
+        const ta = document.createElement("textarea");
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast(I18N[state.lang].copied);
+      }
+    }
+
+    function wireEvents() {
+      document.getElementById("btn-theme").addEventListener("click", () => {
+        state.theme = state.theme === "dark" ? "light" : "dark";
+        applyTheme();
+      });
+      document.getElementById("btn-lang").addEventListener("click", () => {
+        state.lang = state.lang === "zh" ? "en" : "zh";
+        localStorage.setItem("ac_bib_lang", state.lang);
+        renderStaticText();
+        renderAll();
+      });
+      document.getElementById("btn-reset").addEventListener("click", () => {
+        state.query = "";
+        state.relevance = "";
+        state.yearWindow = "";
+        state.docType = "";
+        state.dims = {};
+        state.page = 1;
+        document.getElementById("search-input").value = "";
+        applyFiltersAndSort();
+      });
+      let timer = null;
+      document.getElementById("search-input").addEventListener("input", (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          state.query = (e.target.value || "").trim().toLowerCase();
+          state.page = 1;
+          applyFiltersAndSort();
+        }, 120);
+      });
+      document.getElementById("sort-select").addEventListener("change", (e) => {
+        state.sort = e.target.value;
+        state.page = 1;
+        applyFiltersAndSort();
+      });
+      document.getElementById("rel-chips").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-rel]");
+        if (!btn) return;
+        state.relevance = btn.dataset.rel;
+        state.page = 1;
+        applyFiltersAndSort();
+      });
+      document.getElementById("year-chips").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-year]");
+        if (!btn) return;
+        state.yearWindow = btn.dataset.year;
+        state.page = 1;
+        applyFiltersAndSort();
+      });
+      document.getElementById("doctype-chips").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-dt]");
+        if (!btn) return;
+        state.docType = btn.dataset.dt;
+        state.page = 1;
+        applyFiltersAndSort();
+      });
+      document.getElementById("dim-accordions").addEventListener("change", (e) => {
+        const cb = e.target.closest("input[type='checkbox'][data-dim]");
+        if (!cb) return;
+        toggleDimOption(cb.dataset.dim, cb.dataset.sub);
+      });
+      document.getElementById("active-filters").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        if (btn.dataset.clear) {
+          state[btn.dataset.clear] = "";
+          if (btn.dataset.clear === "query") document.getElementById("search-input").value = "";
+        } else if (btn.dataset.clearDim) {
+          state.dims[btn.dataset.clearDim]?.delete(btn.dataset.clearSub);
+        }
+        state.page = 1;
+        applyFiltersAndSort();
+      });
+      document.getElementById("cards-container").addEventListener("click", (e) => {
+        const tagBtn = e.target.closest("[data-quick-dim]");
+        if (tagBtn) {
+          toggleDimOption(tagBtn.dataset.quickDim, tagBtn.dataset.quickSub);
+          return;
+        }
+        const copyBtn = e.target.closest("[data-copy]");
+        if (!copyBtn) return;
+        const it = state.filtered[Number(copyBtn.dataset.idx)];
+        if (!it) return;
+        if (copyBtn.dataset.copy === "apa") copyText(buildApaCitation(it));
+        else if (copyBtn.dataset.copy === "gb") copyText(buildGbCitation(it));
+        else if (copyBtn.dataset.copy === "bib") copyText(buildBibtex(it));
+      });
+      document.getElementById("pagination").addEventListener("click", (e) => {
+        if (e.target.id === "pg-prev" && state.page > 1) {
+          state.page--;
+          renderCards();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (e.target.id === "pg-next") {
+          state.page++;
+          renderCards();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+      document.getElementById("btn-export-bib").addEventListener("click", exportFilteredBib);
+      document.getElementById("btn-export-csv").addEventListener("click", exportFilteredCsv);
+    }
+
+    async function init() {
+      renderStaticText();
+      wireEvents();
+      try {
+        const resp = await fetch("./data/catalog.json");
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        data.items.forEach((it) => {
+          const dimsFlat = Object.values(it.dimensions || {}).flat().join(" ");
+          it._searchBlob = [it.title, it.author_display, it.venue, it.doi, (it.tags || []).join(" "), dimsFlat, it.ai_summary].join(" ").toLowerCase();
+        });
+        state.catalog = data;
+        applyFiltersAndSort();
+      } catch (err) {
+        document.getElementById("cards-container").innerHTML =
+          `<div class="empty-state">Failed to load catalog data (${escapeHtml(err.message)}).</div>`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

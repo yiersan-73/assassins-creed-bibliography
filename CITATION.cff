@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: "Assassin's Creed Open Academic Bibliography"
+message: "If you use this bibliographic dataset or curation pipeline in your research, please cite it using these metadata."
+type: dataset
+authors:
+  - alias: "yiersan-73"
+version: 1.1.0
+date-released: 2026-11-26
+license: MIT
+repository-code: "https://github.com/yiersan-73/assassins-creed-bibliography"
+url: "https://yiersan-73.github.io/assassins-creed-bibliography/"
+keywords:
+  - assassin's creed
+  - game studies
+  - digital humanities
+  - zotero
+  - bibliography
+  - openalex
+  - multi-llm
+abstract: >-
+  An open, Zotero-backed academic bibliography on Assassin's Creed (Game Studies
+  & Digital Humanities), organized across four taxonomy dimensions and 32
+  controlled tags, paired with a config-driven OpenAlex + Multi-LLM curation
+  pipeline and zero-dependency web catalog.
