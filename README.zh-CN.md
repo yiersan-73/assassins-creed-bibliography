@@ -4,7 +4,7 @@
 
 面向游戏研究（Game Studies）与数字人文（Digital Humanities）的 **《刺客信条》开放 Zotero 学术文献库（`586` 篇）**，配套配置驱动的 OpenAlex + Multi-LLM 自动策展工具。
 
-[![Web Catalog](https://img.shields.io/badge/在线检索站-四维交互查询-2563EB?style=flat-square&logo=githubpages&logoColor=white)](https://yiersan-73.github.io/assassins-creed-bibliography/) [![Open Zotero Library](https://img.shields.io/badge/Zotero_文献库-586_篇-CC2936?style=flat-square&logo=zotero&logoColor=white)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Taxonomy](https://img.shields.io/badge/分类体系-58_集合_%7C_32_标签-2B6CB0?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Languages](https://img.shields.io/badge/收录语种-9_种学术语言-0D9488?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Multi-LLM Pipeline](https://img.shields.io/badge/策展引擎-OpenAI_%7C_Claude_%7C_Ollama-10A37F?style=flat-square)](#-%E8%87%AA%E5%8A%A8%E5%8C%96%E7%AD%96%E5%B1%95%E5%BC%95%E6%93%8E%E9%9D%A2%E5%90%91%E5%BC%80%E5%8F%91%E8%80%85%E4%B8%8E%E5%A4%8D%E7%94%A8%E8%80%85) [![License: MIT](https://img.shields.io/badge/Code_License-MIT-F7DF1E?style=flat-square)](./LICENSE)
+[![Web Catalog](https://img.shields.io/badge/在线检索站-四维交互查询-2563EB?style=flat-square&logo=githubpages&logoColor=white)](https://yiersan-73.github.io/assassins-creed-bibliography/) [![Open Zotero Library](https://img.shields.io/badge/Zotero_文献库-586_篇-CC2936?style=flat-square&logo=zotero&logoColor=white)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Taxonomy](https://img.shields.io/badge/分类体系-58_集合_%7C_32_标签-2B6CB0?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Languages](https://img.shields.io/badge/收录语种-9_种学术语言-0D9488?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Multi-LLM Pipeline](https://img.shields.io/badge/策展引擎-OpenAI_%7C_Claude_%7C_Ollama-10A37F?style=flat-square)](#-%E8%87%AA%E5%8A%A8%E5%8C%96%E7%AD%96%E5%B1%95%E5%BC%95%E6%93%8E%E9%9D%A2%E5%90%91%E5%BC%80%E5%8F%91%E8%80%85%E4%B8%8E%E5%A4%8D%E7%94%A8%E8%80%85) [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24557853-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.24557853) [![License: MIT](https://img.shields.io/badge/Code_License-MIT-F7DF1E?style=flat-square)](./LICENSE)
 
 > [!TIP]
 > **需要找论文、写课程论文或毕业论文文献综述？无需注册账号、无需懂代码！** 可直接打开 **[在线交互检索站（支持四维筛选与一键引文）](https://yiersan-73.github.io/assassins-creed-bibliography/)**，或进入 **[Zotero 公开文献库（586 篇）](https://www.zotero.org/groups/6777746/assassins_creed_research/library)** 按 58 个四维目录与 32 个标签浏览导出。
@@ -256,14 +256,15 @@ LLM_MODEL=claude-haiku-5-5
 
 **APA 7th 文本引用：**
 
-> yiersan-73. (2026). *Assassin's Creed Open Academic Bibliography* [Dataset & software]. GitHub & Zotero. https://github.com/yiersan-73/assassins-creed-bibliography
+> yiersan-73. (2026). *Assassin's Creed Open Academic Bibliography* [Dataset & software]. Zenodo & GitHub. https://doi.org/10.5281/zenodo.24557853
 
 ```bibtex
 @misc{yiersan73_2026_ac_bibliography,
   author       = {yiersan-73},
   title        = {Assassin's Creed Open Academic Bibliography},
   year         = {2026},
-  howpublished = {Zotero Public Group \& GitHub},
+  howpublished = {Zotero Public Group, Zenodo \& GitHub},
+  doi          = {10.5281/zenodo.24557853},
   url          = {https://github.com/yiersan-73/assassins-creed-bibliography},
   note         = {Public Zotero Library: https://www.zotero.org/groups/6777746/assassins_creed_research/library}
 }

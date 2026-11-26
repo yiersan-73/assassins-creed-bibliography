@@ -442,6 +442,7 @@
         <a id="link-zotero" class="btn btn-primary" href="https://www.zotero.org/groups/6777746/assassins_creed_research/library" target="_blank" rel="noopener">Zotero Library</a>
         <a class="btn" href="https://raw.githubusercontent.com/yiersan-73/assassins-creed-bibliography/main/data/bibliography.csv" target="_blank" rel="noopener" id="ui-dl-csv">Full CSV</a>
         <a class="btn" href="https://github.com/yiersan-73/assassins-creed-bibliography" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn" href="https://doi.org/10.5281/zenodo.24557853" target="_blank" rel="noopener">DOI</a>
         <button class="btn" id="btn-lang" type="button">中文</button>
         <button class="btn" id="btn-theme" type="button">Dark</button>
       </div>
@@ -809,7 +810,8 @@
       }
       document.getElementById("footer-compliance").innerHTML =
         `${escapeHtml(t.compliance)} · <a href="https://github.com/yiersan-73/assassins-creed-bibliography/issues" target="_blank" rel="noopener">${escapeHtml(t.missingLink)}</a>`;
-      document.getElementById("footer-sync").textContent = `Snapshot: ${(m.generated_at || "").slice(0, 10)} (Zotero v${m.zotero_library_version || "?"})`;
+      document.getElementById("footer-sync").innerHTML =
+        `Snapshot: ${escapeHtml((m.generated_at || "").slice(0, 10))} (Zotero v${escapeHtml(m.zotero_library_version || "?")}) · <a href="https://doi.org/10.5281/zenodo.24557853" target="_blank" rel="noopener">DOI: 10.5281/zenodo.24557853</a>`;
     }
 
     function renderFacetControls() {

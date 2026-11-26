@@ -1,6 +1,6 @@
 # Dataset Dictionary (`data/`)
 
-This directory contains the open, sanitized snapshot exported from the **[Zotero Public Group (`6777746`)](https://www.zotero.org/groups/6777746/assassins_creed_research/library)**.
+This directory contains the open, sanitized snapshot exported from the **[Zotero Public Group (`6777746`)](https://www.zotero.org/groups/6777746/assassins_creed_research/library)** and permanently archived on Zenodo ([`10.5281/zenodo.24557853`](https://doi.org/10.5281/zenodo.24557853)).
 
 ## Files
 

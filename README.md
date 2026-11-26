@@ -4,7 +4,7 @@ English | [简体中文](./README.zh-CN.md)
 
 An open, Zotero-backed scholarly bibliography of **586** curated academic works on *Assassin's Creed* (Game Studies & Digital Humanities), maintained with a reusable OpenAlex + Multi-LLM curation pipeline.
 
-[![Web Catalog](https://img.shields.io/badge/Web_Catalog-Interactive_Search-2563EB?style=flat-square&logo=githubpages&logoColor=white)](https://yiersan-73.github.io/assassins-creed-bibliography/) [![Open Zotero Library](https://img.shields.io/badge/Zotero_Library-586_Works-CC2936?style=flat-square&logo=zotero&logoColor=white)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Taxonomy](https://img.shields.io/badge/Taxonomy-58_Collections_%7C_32_Tags-2B6CB0?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Languages](https://img.shields.io/badge/Languages-9_Scholarly_Languages-0D9488?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Multi-LLM Pipeline](https://img.shields.io/badge/Pipeline-OpenAI_%7C_Claude_%7C_Ollama-10A37F?style=flat-square)](#-automated-curation-pipeline-for-developers) [![License: MIT](https://img.shields.io/badge/Code_License-MIT-F7DF1E?style=flat-square)](./LICENSE)
+[![Web Catalog](https://img.shields.io/badge/Web_Catalog-Interactive_Search-2563EB?style=flat-square&logo=githubpages&logoColor=white)](https://yiersan-73.github.io/assassins-creed-bibliography/) [![Open Zotero Library](https://img.shields.io/badge/Zotero_Library-586_Works-CC2936?style=flat-square&logo=zotero&logoColor=white)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Taxonomy](https://img.shields.io/badge/Taxonomy-58_Collections_%7C_32_Tags-2B6CB0?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Languages](https://img.shields.io/badge/Languages-9_Scholarly_Languages-0D9488?style=flat-square)](https://www.zotero.org/groups/6777746/assassins_creed_research/library) [![Multi-LLM Pipeline](https://img.shields.io/badge/Pipeline-OpenAI_%7C_Claude_%7C_Ollama-10A37F?style=flat-square)](#-automated-curation-pipeline-for-developers) [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24557853-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.24557853) [![License: MIT](https://img.shields.io/badge/Code_License-MIT-F7DF1E?style=flat-square)](./LICENSE)
 
 > [!TIP]
 > **Looking for papers or writing a literature review? No login or coding needed!** Search 4D facets and copy citations instantly in the **[Interactive Web Catalog](https://yiersan-73.github.io/assassins-creed-bibliography/)**, or browse all 58 folders & 32 tags directly inside the **[Zotero Public Group (586 Works)](https://www.zotero.org/groups/6777746/assassins_creed_research/library)**.
@@ -256,14 +256,15 @@ LLM_MODEL=claude-haiku-5-5
 
 **Plain Text (APA 7th):**
 
-> yiersan-73. (2026). *Assassin's Creed Open Academic Bibliography* [Dataset & software]. GitHub & Zotero. https://github.com/yiersan-73/assassins-creed-bibliography
+> yiersan-73. (2026). *Assassin's Creed Open Academic Bibliography* [Dataset & software]. Zenodo & GitHub. https://doi.org/10.5281/zenodo.24557853
 
 ```bibtex
 @misc{yiersan73_2026_ac_bibliography,
   author       = {yiersan-73},
   title        = {Assassin's Creed Open Academic Bibliography},
   year         = {2026},
-  howpublished = {Zotero Public Group \& GitHub},
+  howpublished = {Zotero Public Group, Zenodo \& GitHub},
+  doi          = {10.5281/zenodo.24557853},
   url          = {https://github.com/yiersan-73/assassins-creed-bibliography},
   note         = {Public Zotero Library: https://www.zotero.org/groups/6777746/assassins_creed_research/library}
 }
